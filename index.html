@@ -1,1 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Workout">
+<meta name="theme-color" content="#ffffff">
+<title>Daily Workout</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#e8e8e8;
+  --txt:#111111;--txt2:#666666;--txt3:#999999;
+  --border:#e0e0e0;--border2:#cccccc;
+  --success-bg:#e6f4ea;--success-txt:#1e7e34;
+  --radius:10px;--radius-lg:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --txt:#f2f2f7;--txt2:#aeaeb2;--txt3:#636366;
+    --border:#3a3a3c;--border2:#48484a;
+    --success-bg:#1a3a22;--success-txt:#4cd964;
+  }
+}
+html,body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:16px;min-height:100vh}
+.app{max-width:430px;margin:0 auto;padding:0 0 48px}
 
+.header{padding:16px 16px 10px;background:var(--bg);position:sticky;top:0;z-index:10;border-bottom:0.5px solid var(--border)}
+.daynav{display:flex;align-items:center;justify-content:space-between}
+.arrow-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--border2);background:transparent;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt2)}
+.arrow-btn:active{background:var(--bg2)}
+.day-info{text-align:center;flex:1;padding:0 8px}
+.day-name{font-size:20px;font-weight:600;color:var(--txt)}
+.day-split{font-size:13px;color:var(--txt2);margin-top:2px}
+.day-date{font-size:12px;color:var(--txt3);margin-top:1px}
+
+.week-strip{display:flex;gap:4px;padding:10px 16px 0;overflow-x:auto;scrollbar-width:none}
+.week-strip::-webkit-scrollbar{display:none}
+.week-dot{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;width:40px}
+.wd-label{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.04em}
+.wd-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--txt2);background:var(--bg2)}
+.wd-num.today{background:#378ADD;color:#fff}
+.wd-num.active{border:2px solid #378ADD;color:#378ADD;background:var(--bg)}
+.wd-num.today.active{background:#378ADD;color:#fff;border:none}
+.wd-pips{display:flex;gap:2px}
+.wd-pip{width:5px;height:5px;border-radius:50%;background:var(--border2)}
+.wd-pip.full{background:#639922}
+
+.timer-wrap{margin:10px 16px 0;background:var(--bg2);border-radius:var(--radius-lg);padding:14px 16px;display:none}
+.timer-wrap.show{display:block}
+.timer-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.timer-lbl{font-size:12px;color:var(--txt2);margin-bottom:2px}
+.timer-num{font-size:34px;font-weight:600;color:var(--txt);font-variant-numeric:tabular-nums;letter-spacing:-0.5px}
+.timer-next{font-size:12px;color:var(--txt3);text-align:right;max-width:130px;line-height:1.4}
+.timer-bar-bg{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.timer-bar{height:100%;border-radius:3px;transition:width 0.95s linear}
+.timer-btns{display:flex;gap:8px}
+.t-btn{flex:1;height:38px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;font-size:14px;font-weight:500;cursor:pointer;color:var(--txt2)}
+.t-btn:active{background:var(--bg3)}
+.t-btn.primary{color:var(--txt);border-color:var(--txt)}
+
+.sum-row{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none}
+.sum-row::-webkit-scrollbar{display:none}
+.sum-cell{background:var(--bg2);border-radius:var(--radius);padding:10px 10px;text-align:center;flex:1;min-width:64px;flex-shrink:0}
+.sum-n{font-size:16px;font-weight:600}
+.sum-l{font-size:10px;color:var(--txt2);margin-top:2px}
+
+.done-banner{margin:0 16px 10px;background:var(--success-bg);color:var(--success-txt);border-radius:var(--radius);padding:11px 14px;text-align:center;font-size:14px;font-weight:600;display:none}
+.done-banner.show{display:block}
+
+.ex-list{padding:0 16px}
+.ex-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
+.ex-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.ex-title{font-size:15px;font-weight:600;color:var(--txt)}
+.ex-muscle{font-size:11px;color:var(--txt3);margin-top:2px}
+.ex-count{font-size:16px;font-weight:600;flex-shrink:0;margin-left:8px}
+.prog-bg{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.35s}
+
+.set-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.set-lbl{font-size:11px;color:var(--txt3);width:34px;flex-shrink:0;text-align:center;line-height:1.3}
+.set-btn{flex:1;min-height:46px;border-radius:var(--radius);border:1.5px solid;font-size:13px;font-weight:600;cursor:pointer;background:transparent;transition:transform 0.1s;padding:4px 8px;text-align:center;line-height:1.3}
+.set-btn:active{transform:scale(0.97)}
+.set-btn.done-state{opacity:0.4;text-decoration:line-through;background:var(--bg2) !important;border-color:var(--border) !important;color:var(--txt3) !important}
+.set-btn.remainder{border-style:dashed !important}
+.set-input-group{display:flex;gap:4px;flex-shrink:0}
+.rep-input{width:50px;height:46px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--txt);font-size:16px;text-align:center;padding:0}
+.rep-input:focus{outline:none;border-color:#378ADD}
+.log-btn{height:46px;padding:0 10px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt2)}
+.log-btn:active{background:var(--bg2)}
+.rem-tag{font-size:10px;color:var(--txt3);padding:0 0 5px 41px}
+
+.footer{text-align:center;padding:20px 16px 8px;font-size:11px;color:var(--txt3);line-height:1.8}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="daynav">
+      <button class="arrow-btn" id="prev-btn">&#8249;</button>
+      <div class="day-info">
+        <div class="day-name" id="day-name"></div>
+        <div class="day-split" id="day-split"></div>
+        <div class="day-date" id="day-date"></div>
+      </div>
+      <button class="arrow-btn" id="next-btn">&#8250;</button>
+    </div>
+    <div class="week-strip" id="week-strip"></div>
+  </div>
+
+  <div class="timer-wrap" id="timer-wrap">
+    <div class="timer-top">
+      <div>
+        <div class="timer-lbl" id="timer-lbl">Rest</div>
+        <div class="timer-num" id="timer-num">1:30</div>
+      </div>
+      <div class="timer-next" id="timer-next"></div>
+    </div>
+    <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+    <div class="timer-btns">
+      <button class="t-btn" id="pause-btn">Pause</button>
+      <button class="t-btn primary" id="skip-btn">Skip rest</button>
+    </div>
+  </div>
+
+  <div class="sum-row" id="sum-row"></div>
+  <div class="done-banner" id="done-banner">All sets done — great work today!</div>
+  <div class="ex-list" id="ex-list"></div>
+  <div class="footer">Logs saved on this device<br>Safari → Share → Add to Home Screen</div>
+</div>
+
+<script>
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'];
+const EX={
+  dips:  {id:'dips', name:'Dips',         muscle:'Triceps + chest',    color:'#B5D4F4',text:'#0C447C',fill:'#378ADD',sets:[20,20,20,20,20],rest:90},
+  push:  {id:'push', name:'Push-ups',     muscle:'Chest + triceps',    color:'#F5C4B3',text:'#712B13',fill:'#D85A30',sets:[25,25,25,25],rest:60},
+  pike:  {id:'pike', name:'Pike push-ups',muscle:'Shoulders',          color:'#CECBF6',text:'#3C3489',fill:'#7F77DD',sets:[25,25,25,25],rest:60},
+  pull:  {id:'pull', name:'Pull-ups',     muscle:'Back + biceps',      color:'#C0DD97',text:'#27500A',fill:'#639922',sets:[10,10,10,10,10,10,10,10],rest:120},
+  drow:  {id:'drow', name:'DB rows',      muscle:'Back + rear delts',  color:'#9FE1CB',text:'#085041',fill:'#1D9E75',sets:[20,20,20,20,20],rest:75},
+  curl:  {id:'curl', name:'Chin-up curls',muscle:'Biceps',             color:'#F4C0D1',text:'#72243E',fill:'#D4537E',sets:[20,20,20,20,20],rest:75},
+  hammer:{id:'hammer',name:'Hammer curls',muscle:'Biceps + brachialis',color:'#FAC775',text:'#633806',fill:'#BA7517',sets:[20,20,20,20,20],rest:60},
+  squat: {id:'squat',name:'Squats',       muscle:'Quads + glutes',     color:'#F4C0D1',text:'#72243E',fill:'#D4537E',sets:[25,25,25,25],rest:60},
+  lunge: {id:'lunge',name:'Lunges',       muscle:'Legs + glutes',      color:'#FAC775',text:'#633806',fill:'#BA7517',sets:[25,25,25,25],rest:60},
+};
+const SPLIT=[
+  {label:'Push day',muscles:'Chest · Shoulders · Triceps',ids:['push','dips','pike']},
+  {label:'Pull day',muscles:'Back · Biceps · Brachialis', ids:['pull','drow','curl','hammer']},
+  {label:'Legs day',muscles:'Quads · Glutes · Hamstrings',ids:['squat','lunge']},
+  {label:'Push day',muscles:'Chest · Shoulders · Triceps',ids:['push','dips','pike']},
+  {label:'Pull day',muscles:'Back · Biceps · Brachialis', ids:['pull','drow','curl','hammer']},
+  {label:'Legs day',muscles:'Quads · Glutes · Hamstrings',ids:['squat','lunge']},
+];
+
+const STORE='wt_v3';
+let data={},sel=0,weekOff=0;
+let tInt=null,tTotal=0,tLeft=0,tPaused=false;
+
+function monOf(off){
+  const d=new Date(),day=d.getDay();
+  const m=new Date(d);
+  m.setDate(d.getDate()-(day===0?6:day-1)+off*7);
+  m.setHours(0,0,0,0);return m;
+}
+function dateOf(i){const m=monOf(weekOff);const d=new Date(m);d.setDate(m.getDate()+i);return d;}
+function dkey(d){return d.toISOString().slice(0,10);}
+function load(){try{const r=localStorage.getItem(STORE);if(r)data=JSON.parse(r);}catch(e){}}
+function save(){try{localStorage.setItem(STORE,JSON.stringify(data));}catch(e){}}
+
+// stored as array of {reps:N} per exercise per day key
+function getSaved(dk,eid){return (data[dk]&&data[dk][eid])||[];}
+function setSaved(dk,eid,arr){if(!data[dk])data[dk]={};data[dk][eid]=arr;save();}
+
+function getTotalDone(dk,eid){
+  return getSaved(dk,eid).reduce((a,s)=>a+(s?s.reps:0),0);
+}
+
+// Build the visible set list — base sets + auto remainder if partial
+function buildSets(dk,eid){
+  const ex=EX[eid];
+  const saved=getSaved(dk,eid);
+  const result=[];
+  let running=0;
+
+  // Walk base sets
+  for(let i=0;i<ex.sets.length;i++){
+    if(running>=100)break;
+    const s=saved[i];
+    if(s){
+      result.push({idx:i,target:ex.sets[i],logged:s.reps,done:true,auto:false});
+      running+=s.reps;
+    } else {
+      result.push({idx:i,target:ex.sets[i],logged:null,done:false,auto:false});
+    }
+  }
+
+  // Walk any extra saved sets beyond base (auto-generated ones that were logged)
+  let ei=ex.sets.length;
+  while(saved[ei]){
+    result.push({idx:ei,target:saved[ei].reps,logged:saved[ei].reps,done:true,auto:true});
+    running+=saved[ei].reps;
+    ei++;
+  }
+
+  // If still short and no undone set pending, append remainder
+  const hasUndone=result.some(s=>!s.done);
+  if(running>0&&running<100&&!hasUndone){
+    const rem=100-running;
+    result.push({idx:ei,target:rem,logged:null,done:false,auto:true,isRemainder:true});
+  }
+
+  return result;
+}
+
+function fmt(s){const m=Math.floor(s/60),r=s%60;return m+':'+(r<10?'0':'')+r;}
+
+function startTimer(secs,lbl,color,nextLbl){
+  clearInterval(tInt);tTotal=secs;tLeft=secs;tPaused=false;
+  const wrap=document.getElementById('timer-wrap');
+  wrap.classList.add('show');
+  document.getElementById('timer-lbl').textContent=lbl||'Rest';
+  document.getElementById('timer-next').textContent=nextLbl||'';
+  document.getElementById('timer-bar').style.background=color||'#378ADD';
+  document.getElementById('timer-bar').style.width='100%';
+  document.getElementById('timer-num').textContent=fmt(tLeft);
+  document.getElementById('pause-btn').textContent='Pause';
+  tInt=setInterval(()=>{
+    if(tPaused)return;
+    tLeft--;
+    if(tLeft<=0){clearInterval(tInt);tLeft=0;document.getElementById('timer-wrap').classList.remove('show');}
+    document.getElementById('timer-num').textContent=fmt(tLeft);
+    document.getElementById('timer-bar').style.width=Math.round(tLeft/tTotal*100)+'%';
+  },1000);
+}
+
+document.getElementById('pause-btn').onclick=()=>{
+  tPaused=!tPaused;
+  document.getElementById('pause-btn').textContent=tPaused?'Resume':'Pause';
+};
+document.getElementById('skip-btn').onclick=()=>{
+  clearInterval(tInt);document.getElementById('timer-wrap').classList.remove('show');
+};
+document.getElementById('prev-btn').onclick=()=>{sel=(sel+5)%6;render();};
+document.getElementById('next-btn').onclick=()=>{sel=(sel+1)%6;render();};
+
+function doComplete(dk,eid,setIdx,reps,restSecs,fill,name){
+  const saved=getSaved(dk,eid);
+  if(saved[setIdx]){
+    // undo — remove this and everything after
+    const trimmed=saved.slice(0,setIdx);
+    setSaved(dk,eid,trimmed);
+  } else {
+    saved[setIdx]={reps:reps};
+    setSaved(dk,eid,saved);
+    const total=getTotalDone(dk,eid);
+    const rem=100-total;
+    const nextLbl=rem<=0?'Exercise complete!':rem+' reps still needed';
+    startTimer(restSecs,'Rest · '+name,fill,nextLbl);
+  }
+  render();
+}
+
+function doLog(dk,eid,setIdx,restSecs,fill,name){
+  const inp=document.getElementById('i-'+eid+'-'+setIdx);
+  const v=parseInt(inp.value);
+  if(!v||v<1)return;
+  const saved=getSaved(dk,eid);
+  saved[setIdx]={reps:v};
+  setSaved(dk,eid,saved);
+  inp.value='';
+  const total=getTotalDone(dk,eid);
+  const rem=100-total;
+  const nextLbl=rem<=0?'Exercise complete!':rem+' reps still needed';
+  startTimer(restSecs,'Rest · '+name,fill,nextLbl);
+  render();
+}
+
+function selDay(i){sel=i;render();}
+
+function render(){
+  const d=dateOf(sel);
+  const dk=dkey(d);
+  const sp=SPLIT[sel];
+  const today=new Date();today.setHours(0,0,0,0);
+  const isToday=d.getTime()===today.getTime();
+
+  document.getElementById('day-name').textContent=DAYS[sel];
+  document.getElementById('day-split').textContent=sp.label+' · '+sp.muscles;
+  document.getElementById('day-date').textContent=
+    d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+(isToday?' · Today':'');
+
+  document.getElementById('week-strip').innerHTML=DAYS.map((day,i)=>{
+    const dd=dateOf(i);const ddk2=dkey(dd);
+    const isTod=dd.getTime()===today.getTime();
+    const isAct=i===sel;
+    const pips=SPLIT[i].ids.map(eid=>`<div class="wd-pip${getTotalDone(ddk2,eid)>=100?' full':''}"></div>`).join('');
+    let cls='wd-num'+(isTod?' today':'')+(isAct&&!isTod?' active':'')+(isAct&&isTod?' today active':'');
+    return `<div class="week-dot" onclick="selDay(${i})"><div class="wd-label">${day[0]}</div><div class="${cls}">${dd.getDate()}</div><div class="wd-pips">${pips}</div></div>`;
+  }).join('');
+
+  document.getElementById('sum-row').innerHTML=sp.ids.map(eid=>{
+    const ex=EX[eid];const done=getTotalDone(dk,eid);
+    return `<div class="sum-cell"><div class="sum-n" style="color:${ex.fill}">${done}/100</div><div class="sum-l">${ex.name}</div></div>`;
+  }).join('');
+
+  const allDone=sp.ids.every(eid=>getTotalDone(dk,eid)>=100);
+  document.getElementById('done-banner').className='done-banner'+(allDone?' show':'');
+
+  document.getElementById('ex-list').innerHTML=sp.ids.map(eid=>{
+    const ex=EX[eid];
+    const totalDone=getTotalDone(dk,eid);
+    const pct=Math.min(100,totalDone);
+    const sets=buildSets(dk,eid);
+
+    const rows=sets.map((s,di)=>{
+      const isRem=s.isRemainder||s.auto;
+      let btnTxt,btnClass='set-btn';
+      if(s.done){
+        btnTxt=s.logged+' reps done — tap to undo';
+        btnClass+=' done-state';
+      } else if(isRem){
+        btnTxt=s.target+' reps (remainder) · tap done';
+        btnClass+=' remainder';
+      } else {
+        btnTxt=s.target+' reps · tap done';
+      }
+      const remTag=isRem&&!s.done
+        ?`<div class="rem-tag">auto-added · ${100-totalDone} reps to reach 100</div>`
+        :'';
+      return `<div>
+        <div class="set-row">
+          <span class="set-lbl">Set<br>${di+1}${isRem&&!s.done?'*':''}</span>
+          <button class="${btnClass}"
+            style="${s.done?'':'border-color:'+ex.color+';color:'+ex.text+';background:'+ex.color}"
+            onclick="doComplete('${dk}','${eid}',${s.idx},${s.target},${ex.rest},'${ex.fill}','${ex.name}')">${btnTxt}</button>
+          <div class="set-input-group">
+            <input class="rep-input" type="number" id="i-${eid}-${s.idx}" min="1" max="200" inputmode="numeric" placeholder="${s.target}">
+            <button class="log-btn" onclick="doLog('${dk}','${eid}',${s.idx},${ex.rest},'${ex.fill}','${ex.name}')">Log</button>
+          </div>
+        </div>${remTag}
+      </div>`;
+    }).join('');
+
+    return `<div class="ex-card">
+      <div class="ex-head">
+        <div><div class="ex-title">${ex.name}</div><div class="ex-muscle">${ex.muscle}</div></div>
+        <div class="ex-count" style="color:${ex.fill}">${totalDone}/100</div>
+      </div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:${ex.fill}"></div></div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
+load();
+const tod2=new Date();tod2.setHours(0,0,0,0);
+for(let i=0;i<6;i++){if(dateOf(i).getTime()===tod2.getTime()){sel=i;break;}}
+render();
+</script>
+</body>
+</html>
